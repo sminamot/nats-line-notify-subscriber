@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -73,5 +74,6 @@ func main() {
 }
 
 func subscribeFunc(s *line.Line) {
+	fmt.Println("Received a message")
 	s.Notify(lineAccessToken)
 }
