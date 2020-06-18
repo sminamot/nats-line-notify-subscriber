@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nats-line-notify-subscriber
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nats-line-notify-subscriber
+  template:
+    metadata:
+      labels:
+        app: nats-line-notify-subscriber
+    spec:
+      containers:
+      - image: sminamot/nats-line-notify-subscriber:0.1.1
+        name: nats-line-notify-subscriber
+        envFrom:
+        - configMapRef:
+            name: nats-line-notify-subscriber-configmap
+        - secretRef:
+            name: nats-line-notify-subscriber-secret
