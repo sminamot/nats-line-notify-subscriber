@@ -26,7 +26,6 @@ func init() {
 	case natsServer, natsChannel, natsQueueGroup, lineAccessToken:
 		log.Fatalln("specify environment variable")
 	}
-
 }
 
 func main() {
