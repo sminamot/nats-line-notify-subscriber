@@ -19,7 +19,7 @@ var (
 func init() {
 	natsServer = os.Getenv("NATS_SERVER")
 	natsChannel = os.Getenv("NATS_CHANNEL")
-	natsQueueGroup = os.Getenv("NATS_GROUP")
+	natsQueueGroup = os.Getenv("NATS_QUEUE_GROUP")
 	lineAccessToken = os.Getenv("LINE_ACCESS_TOKEN")
 
 	switch "" {
