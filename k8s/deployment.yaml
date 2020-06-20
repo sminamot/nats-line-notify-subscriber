@@ -13,7 +13,7 @@ spec:
         app: nats-line-notify-subscriber
     spec:
       containers:
-      - image: sminamot/nats-line-notify-subscriber:0.1.1
+      - image: sminamot/nats-line-notify-subscriber:0.1.3
         name: nats-line-notify-subscriber
         envFrom:
         - configMapRef:
