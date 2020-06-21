@@ -56,29 +56,18 @@ func main() {
 	}
 	defer ec.Close()
 
-	requeue := func(s *line.Line) {
-		ec, err := nats.NewEncodedConn(nc, nats.JSON_ENCODER)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer ec.Close()
-
-		if err := ec.Publish(natsChannel, s); err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	subscribeFunc := func(s *line.Line) {
-		var m string
-		if s.RetryCount == 0 {
-			m = "new"
+		isRetry := s.RetryCount != 0
+		if isRetry {
+			fmt.Printf("Received a retried(%d) message\n", s.RetryCount)
 		} else {
-			m = "retried"
+			fmt.Println("Received a new message")
 		}
-		fmt.Printf("Received a %s message\n", m)
 		if err := s.Notify(lineAccessToken); err != nil && s.RetryCount < maxRequeueCount {
 			s.RetryCount++
-			requeue(s)
+			if err := ec.Publish(natsChannel, s); err != nil {
+				log.Fatal(err)
+			}
 		}
 	}
 	// Subscribe
