@@ -5,16 +5,19 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 
 	"github.com/nats-io/nats.go"
 	line "github.com/sminamot/nats-line-notify"
 )
 
+// environment variable
 var (
 	natsServer      string
 	natsChannel     string
 	natsQueueGroup  string
 	lineAccessToken string
+	maxRequeueCount int
 )
 
 func init() {
@@ -22,6 +25,11 @@ func init() {
 	natsChannel = os.Getenv("NATS_CHANNEL")
 	natsQueueGroup = os.Getenv("NATS_QUEUE_GROUP")
 	lineAccessToken = os.Getenv("LINE_ACCESS_TOKEN")
+	var err error
+	maxRequeueCount, err = strconv.Atoi(os.Getenv("MAX_REQUEUE_COUNT"))
+	if err != nil {
+		log.Fatalln("MAX_REQUEUE_COUNT is must be a numeric value")
+	}
 
 	switch "" {
 	case natsServer, natsChannel, natsQueueGroup, lineAccessToken:
@@ -48,6 +56,31 @@ func main() {
 	}
 	defer ec.Close()
 
+	requeue := func(s *line.Line) {
+		ec, err := nats.NewEncodedConn(nc, nats.JSON_ENCODER)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer ec.Close()
+
+		if err := ec.Publish(natsChannel, s); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	subscribeFunc := func(s *line.Line) {
+		var m string
+		if s.RetryCount == 0 {
+			m = "new"
+		} else {
+			m = "retried"
+		}
+		fmt.Printf("Received a %s message\n", m)
+		if err := s.Notify(lineAccessToken); err != nil && s.RetryCount < maxRequeueCount {
+			s.RetryCount++
+			requeue(s)
+		}
+	}
 	// Subscribe
 	// Decoding errors will be passed to the function supplied via
 	// nats.ErrorHandler above, and the callback supplied here will
@@ -71,9 +104,4 @@ func main() {
 	log.Printf("Draining...")
 	nc.Drain()
 	log.Fatalf("Exiting")
-}
-
-func subscribeFunc(s *line.Line) {
-	fmt.Println("Received a message")
-	s.Notify(lineAccessToken)
 }
