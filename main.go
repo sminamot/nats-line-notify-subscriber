@@ -16,7 +16,6 @@ var (
 	natsServer      string
 	natsChannel     string
 	natsQueueGroup  string
-	lineAccessToken string
 	maxRequeueCount int
 )
 
@@ -24,7 +23,6 @@ func init() {
 	natsServer = os.Getenv("NATS_SERVER")
 	natsChannel = os.Getenv("NATS_CHANNEL")
 	natsQueueGroup = os.Getenv("NATS_QUEUE_GROUP")
-	lineAccessToken = os.Getenv("LINE_ACCESS_TOKEN")
 	var err error
 	maxRequeueCount, err = strconv.Atoi(os.Getenv("MAX_REQUEUE_COUNT"))
 	if err != nil {
@@ -32,7 +30,7 @@ func init() {
 	}
 
 	switch "" {
-	case natsServer, natsChannel, natsQueueGroup, lineAccessToken:
+	case natsServer, natsChannel, natsQueueGroup:
 		log.Fatalln("specify environment variable")
 	}
 }
@@ -63,7 +61,7 @@ func main() {
 		} else {
 			fmt.Println("Received a new message")
 		}
-		if err := s.Notify(lineAccessToken); err != nil && s.RetryCount < maxRequeueCount {
+		if err := s.Notify(); err != nil && s.RetryCount < maxRequeueCount {
 			s.RetryCount++
 			if err := ec.Publish(natsChannel, s); err != nil {
 				log.Fatal(err)
